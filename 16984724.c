@@ -11,6 +11,12 @@ int stringToInt(char * num){
   return newNum;
 }
 
+
+
+
+
+
+
 int * montarMatriz(char * nomeArquivo, int m, int n){
   FILE * arquivo = fopen(nomeArquivo, "r");
   if(arquivo == NULL){
@@ -34,22 +40,22 @@ int * montarMatriz(char * nomeArquivo, int m, int n){
   return matriz;
 }
 
-int floodFill(int * matriz,int linhas, int colunas, int x, int y){
+int floodFill(int * matriz,int linhas, int colunas, int x, int y, int * posVisitada){
   int profundidade;
   int posicao = x+y*colunas; 
 
-  if(x >=0 && y>=0 && x < colunas&& y<linhas && matriz[posicao] != 0 ){
+  if(x >=0 && y>=0 && x < colunas&& y<linhas && posVisitada[posicao] != 0 && 0 != matriz[posicao]){
     profundidade = matriz[posicao];
-    matriz[posicao] = 0;
+    posVisitada[posicao] = 0;
   }else{
     return 0;
   }
   printf("FLOOD %d - pos: %d \n", profundidade, posicao);
 
-  profundidade += floodFill(matriz, linhas, colunas, x+1,y); // x+1
-  profundidade += floodFill(matriz, linhas, colunas, x-1,y); // x-1
-  profundidade += floodFill(matriz, linhas, colunas, x,y+1); // y+1
-  profundidade += floodFill(matriz, linhas, colunas, x,y-1); // y-1
+  profundidade += floodFill(matriz, linhas, colunas, x+1,y, posVisitada); // x+1
+  profundidade += floodFill(matriz, linhas, colunas, x-1,y, posVisitada); // x-1
+  profundidade += floodFill(matriz, linhas, colunas, x,y+1, posVisitada); // y+1
+  profundidade += floodFill(matriz, linhas, colunas, x,y-1, posVisitada); // y-1
 
   return profundidade;
 }
@@ -60,16 +66,21 @@ int buscarIlhas(int * matriz, int linhas, int colunas){
   printf("\nRODEI\n");
   int qtdIlhas = 0;
   int* ilhasProfundidade = (int*) malloc(sizeof(int)*linhas*colunas/2+1); 
-  
+  int* posVisitada = (int*) malloc(sizeof(int)*linhas*colunas); 
+  for (int i = 0; i < linhas*colunas; i++)
+    posVisitada[i] = 1;
+
+
   for(int i = 0; i < linhas*colunas;i++){
-    if(matriz[i]!=0){
+    if(matriz[i]!=0 &&posVisitada[i]!=0){
       // int aux = 
       printf("ILHA %d\n", qtdIlhas);
-      int aux = floodFill(matriz, linhas, colunas, i%colunas,i/colunas); 
+      int aux = floodFill(matriz, linhas, colunas, i%colunas,i/colunas, posVisitada); 
       ilhasProfundidade[qtdIlhas++] = aux <6?1:aux/6;
       
     }
   }
+  free(posVisitada);
 
   printf("%d qtdIlhas\n", qtdIlhas);
   for(int e = 0; e < qtdIlhas;e++)
