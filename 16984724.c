@@ -12,7 +12,79 @@ int stringToInt(char * num){
 }
 
 
+int* preencherMochila(int*profundidades, int qtdIlhas, int profundidadeContainer, int * combinacoes){
 
+  int * ordenadas = (int*) malloc(sizeof(int)*(qtdIlhas));  
+  for (int j = 0; j < qtdIlhas; j++)
+    ordenadas[j] = profundidades[j];
+  
+  for(int i=0; i < qtdIlhas;i++){
+    int min = ordenadas[i];
+    int j = i - 1;
+    while (j >= 0 && ordenadas[j] > min) {
+      ordenadas[j + 1] = ordenadas[j];
+      j = j - 1;
+    }
+    ordenadas[j + 1] = min;
+  }
+
+
+  int * backpack = (int*) malloc(sizeof(int)*profundidadeContainer+1);
+  
+  for (int i = 0; i < profundidadeContainer+1; i++)
+  {
+    backpack[i] = -1;
+  }
+
+  for (int j = 0; j < qtdIlhas; j++)
+  {
+   for (int i = 0; i <= profundidadeContainer; i++)
+    {
+      int target = i-ordenadas[j];        
+      if((target == 0 && backpack[i] == -1) || (target > 0 && backpack[target] != -1 && backpack[target] != j) ){
+        backpack[i] = j;
+      }
+    }
+  }
+
+  int * solucao = (int*) malloc(sizeof(int)*profundidadeContainer);
+  int j = profundidadeContainer;
+  int qtd = 0;
+
+  if(backpack[j]!=-1){
+    int target = profundidadeContainer; 
+    do
+    {
+      solucao[qtd] = ordenadas[backpack[j]];
+      j = j-ordenadas[backpack[j]];
+      qtd++;
+    } while (j!=0);
+
+  }else{
+    return NULL;
+  }
+  int * trueSolution =(int*) malloc(sizeof(int)*qtd);
+  for (int i = 0; i < qtd; i++) trueSolution[i] = solucao[i];
+
+
+  free(ordenadas);
+  free(backpack);
+  free(solucao);
+  *combinacoes = qtd;
+  return trueSolution;
+    
+
+/* algoritmo:
+  1. Pegar máximo das profundidades(Max_p).
+  2. Montar Hash1 de ponteiros para int* com tamanho [0, Max_p]
+  3. Preencher Hash1: Hash1[e] = [i1,i2,...] : [e] representa o elemento das profundidades com id de hash, [i1,i2,...] são os ids dos elementos das profundidades na qual os elementos representam o id e; senão houver o elemento, Hash1[e] aponta para NULL;
+
+  4. Do...while() que percorrerá esse hash e 
+
+
+
+*/
+}
 
 
 
@@ -20,7 +92,7 @@ int stringToInt(char * num){
 int * montarMatriz(char * nomeArquivo, int m, int n){
   FILE * arquivo = fopen(nomeArquivo, "r");
   if(arquivo == NULL){
-    printf("Erro ao abrir arquivo, o arquivo não existe");
+    printf("\nErro ao abrir o arquivo: %s\n", nomeArquivo);
     return NULL;
   }
   int * matriz = (int*) malloc(sizeof(int)*m*n);
@@ -50,8 +122,7 @@ int floodFill(int * matriz,int linhas, int colunas, int x, int y, int * posVisit
   }else{
     return 0;
   }
-  printf("FLOOD %d - pos: %d \n", profundidade, posicao);
-
+  
   profundidade += floodFill(matriz, linhas, colunas, x+1,y, posVisitada); // x+1
   profundidade += floodFill(matriz, linhas, colunas, x-1,y, posVisitada); // x-1
   profundidade += floodFill(matriz, linhas, colunas, x,y+1, posVisitada); // y+1
@@ -61,10 +132,8 @@ int floodFill(int * matriz,int linhas, int colunas, int x, int y, int * posVisit
 }
 
 
-int buscarIlhas(int * matriz, int linhas, int colunas){
-
-  printf("\nRODEI\n");
-  int qtdIlhas = 0;
+int* buscarIlhas(int * matriz, int linhas, int colunas, int*qtdIlhas){
+  *qtdIlhas = 0;
   int* ilhasProfundidade = (int*) malloc(sizeof(int)*linhas*colunas/2+1); 
   int* posVisitada = (int*) malloc(sizeof(int)*linhas*colunas); 
   for (int i = 0; i < linhas*colunas; i++)
@@ -73,22 +142,12 @@ int buscarIlhas(int * matriz, int linhas, int colunas){
 
   for(int i = 0; i < linhas*colunas;i++){
     if(matriz[i]!=0 &&posVisitada[i]!=0){
-      // int aux = 
-      printf("ILHA %d\n", qtdIlhas);
       int aux = floodFill(matriz, linhas, colunas, i%colunas,i/colunas, posVisitada); 
-      ilhasProfundidade[qtdIlhas++] = aux <6?1:aux/6;
-      
+      ilhasProfundidade[(*qtdIlhas)++] = aux <6?1:aux/6;
     }
   }
   free(posVisitada);
-
-  printf("%d qtdIlhas\n", qtdIlhas);
-  for(int e = 0; e < qtdIlhas;e++)
-    printf("%d ", ilhasProfundidade[e]);
-
-  return 0;
-
-
+  return ilhasProfundidade;
 }
 
 int main(int argc, char *argv[]){
@@ -97,6 +156,7 @@ int main(int argc, char *argv[]){
   int * matriz;
 
   int qtdIlhas;
+  int *profundidades;
 
   if(argc != 5){
     printf("Erro!, insira 5 parametros para funcionar:\n./EP1 <profundidade_container> <linhas_da_matriz> <colunas_da_matriz> exemplo.txt ");
@@ -107,29 +167,30 @@ int main(int argc, char *argv[]){
     colunas= stringToInt(argv[3]);
     fileName = argv[4];
 
-    printf("PROFUNDIDADE: %d\n", profundidade_container);
-    printf("LINHAS: %d\n", linhas);
-    printf("COLUNAS: %d\n", colunas);
-    printf("EXEMPLO: %s\n", fileName);
-
     matriz =  montarMatriz(fileName, linhas, colunas);
-    buscarIlhas(matriz, linhas, colunas);
+    if(matriz ==NULL)return-1;
 
-    // for (int i = 0; i < linhas*colunas; i++)
-    // {
-    //   if(i&&!(i%colunas) )printf("\n");
-    //   printf("%d ", matriz[i]);
-
-
-    // }
-
-    
-    
-
+    profundidades = buscarIlhas(matriz, linhas, colunas, &qtdIlhas);  
   }
-  
 
-  scanf("%c");
+  printf("%d\n", qtdIlhas);
+  for(int e = 0; e < qtdIlhas;e++)
+    printf("%d ", profundidades[e]);
+
+  printf("\n");
+  int qtdCombinacoes;
+  int * combinacao = preencherMochila(profundidades, qtdIlhas, profundidade_container, &qtdCombinacoes);
+  if(combinacao == NULL)
+    printf("Nao ha resposta valida!");
+  else  {
+    for(int i = 0; i < qtdCombinacoes;i++){
+      printf("%d ", combinacao[i]);
+    }
+
+  } 
+
+
+  // scanf("%c");
 
   return 0;
 }
