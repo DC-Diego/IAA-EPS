@@ -13,7 +13,6 @@ int stringToInt(char * num){
 
 
 int* preencherMochila(int*profundidades, int qtdIlhas, int profundidadeContainer, int * combinacoes){
-
   int * ordenadas = (int*) malloc(sizeof(int)*(qtdIlhas));  
   for (int j = 0; j < qtdIlhas; j++)
     ordenadas[j] = profundidades[j];
@@ -29,61 +28,75 @@ int* preencherMochila(int*profundidades, int qtdIlhas, int profundidadeContainer
   }
 
 
-  int * backpack = (int*) malloc(sizeof(int)*profundidadeContainer+1);
+  int ** backpack = (int**) malloc(sizeof(int*)*(profundidadeContainer+1));
   
   for (int i = 0; i < profundidadeContainer+1; i++)
   {
-    backpack[i] = -1;
-  }
+    backpack[i] = (int*) malloc(sizeof(int)*(qtdIlhas+1));
 
-  for (int j = 0; j < qtdIlhas; j++)
+  }
+  backpack[0][0] = 1;
+  for (int i = 1; i < profundidadeContainer+1; i++)
+  backpack[i][0] = 0;
+
+
+  for (int i = 0; i < profundidadeContainer+1; i++)
   {
-   for (int i = 0; i <= profundidadeContainer; i++)
+    for (int j = 1; j <= qtdIlhas; j++)
     {
-      int target = i-ordenadas[j];        
-      if((target == 0 && backpack[i] == -1) || (target > 0 && backpack[target] != -1 && backpack[target] != j) ){
-        backpack[i] = j;
+      int target = i-ordenadas[j-1];
+      if(backpack[i][j-1] != 0 || target == 0 || (target > 0 && backpack[target][j-1] != 0) ){
+        backpack[i][j] = 1;
+        }else{
+        backpack[i][j]=0;
       }
+
     }
   }
-
-  int * solucao = (int*) malloc(sizeof(int)*profundidadeContainer);
-  int j = profundidadeContainer;
-  int qtd = 0;
-
-  if(backpack[j]!=-1){
-    int target = profundidadeContainer; 
-    do
+  
+  if(backpack[profundidadeContainer][qtdIlhas]==0){
+    for (int i = 0; i < profundidadeContainer+1; i++)
     {
-      solucao[qtd] = ordenadas[backpack[j]];
-      j = j-ordenadas[backpack[j]];
-      qtd++;
-    } while (j!=0);
+      free(backpack[i]);
 
-  }else{
+    }
+    free(backpack);
+    free(ordenadas);
+
     return NULL;
   }
-  int * trueSolution =(int*) malloc(sizeof(int)*qtd);
-  for (int i = 0; i < qtd; i++) trueSolution[i] = solucao[i];
 
+  int * solutionIds =(int*) malloc(sizeof(int)*(qtdIlhas));
 
-  free(ordenadas);
+  int tamanhoBusca = profundidadeContainer;
+  int sizeSolution =0;
+ 
+  for (int i = qtdIlhas; i > 0; i--)
+  {
+      if(backpack[tamanhoBusca][i]!=0 && tamanhoBusca-ordenadas[i-1] >= 0){
+        solutionIds[sizeSolution] = i-1;
+        tamanhoBusca = tamanhoBusca-ordenadas[i-1];
+        sizeSolution+=1;
+      }
+  }
+ 
+  int * solution = (int*) malloc(sizeof(int)*(sizeSolution));
+  for (int i = 0; i < sizeSolution; i++){
+    solution[i] = ordenadas[solutionIds[i]];
+  }
+
+  for (int i = 0; i < profundidadeContainer+1; i++)
+  {
+    free(backpack[i]);
+
+  }
   free(backpack);
-  free(solucao);
-  *combinacoes = qtd;
-  return trueSolution;
-    
+  free(ordenadas);
+  free(solutionIds);
 
-/* algoritmo:
-  1. Pegar máximo das profundidades(Max_p).
-  2. Montar Hash1 de ponteiros para int* com tamanho [0, Max_p]
-  3. Preencher Hash1: Hash1[e] = [i1,i2,...] : [e] representa o elemento das profundidades com id de hash, [i1,i2,...] são os ids dos elementos das profundidades na qual os elementos representam o id e; senão houver o elemento, Hash1[e] aponta para NULL;
+  *combinacoes = sizeSolution;
+  return solution;
 
-  4. Do...while() que percorrerá esse hash e 
-
-
-
-*/
 }
 
 
@@ -100,6 +113,8 @@ int * montarMatriz(char * nomeArquivo, int m, int n){
   int i = 0;
   int c;
   while((c=fgetc(arquivo))!=EOF){
+
+
     if((char) c == ' ' || (char) c == '\n'){
       i++;
       matriz[i] = 0;
@@ -189,8 +204,6 @@ int main(int argc, char *argv[]){
 
   } 
 
-
-  // scanf("%c");
 
   return 0;
 }
