@@ -113,7 +113,11 @@ int * montarMatriz(char * nomeArquivo, int m, int n){
   int i = 0;
   int c;
   while((c=fgetc(arquivo))!=EOF){
+    if(i>m*n){
+      printf("\nErro! As Colunas ou Linhas inseridas não correspondem com o arquivo! %s\n", nomeArquivo);
+      return NULL;
 
+    }
 
     if((char) c == ' ' || (char) c == '\n'){
       i++;
